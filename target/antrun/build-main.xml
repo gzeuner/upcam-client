@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="maven-antrun-" default="main"  >
+<target name="main">
+  <mkdir dir="C:\Users\guido/upcam/images/received"/>
+  <mkdir dir="C:\Users\guido/upcam/images/sent"/>
+  <mkdir dir="C:\Users\guido/upcam/logs"/>
+  <copy file="target/upcam-client-1.0-jar-with-dependencies.jar" todir="C:\Users\guido/upcam"/>
+  <copy file="upcamclient.cmd" todir="C:\Users\guido/upcam"/>
+  <copy file="upcamclient.sh" todir="C:\Users\guido/upcam"/>
+  <copy file="src/main/resources/upcamclient.properties" todir="C:\Users\guido/upcam"/>
+  <chmod file="C:\Users\guido/upcam/upcamclient.sh" perm="755"/>
+</target>
+</project>
