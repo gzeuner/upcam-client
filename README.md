@@ -3,6 +3,7 @@
 # UpCam Client
 
 UpCam Client ist ein Tool, das Bilder von einer IP-Kamera herunterlädt und bereitstellt. Es kann mit der upCam Tornado HD PRO und anderen kompatiblen Modellen verwendet werden.
+Ergänzend: [SnapShotter](https://github.com/gzeuner/SnapShotter) um Bilder per WhatsApp zu empfangen.
 
 ## Voraussetzungen
 
@@ -49,11 +50,15 @@ Unter Windows verwenden Sie:
 
 [tiny-tool.de](https://tiny-tool.de/).
 
+# Bilder per WhatsApp empfangen
+[SnapShotter](https://github.com/gzeuner/SnapShotter)
+
 ### Englisch
 
 # UpCam Client
 
 UpCam Client is a tool that downloads and provides images from an IP camera. It can be used with the upCam Tornado HD PRO and other compatible models.
+Supplementary: [SnapShotter](https://github.com/gzeuner/SnapShotter) to receive pictures via WhatsApp.
 
 ## Requirements
 
@@ -100,3 +105,5 @@ On Windows, use:
 
 [tiny-tool.de](https://tiny-tool.de/).
 
+# Receive images via WhatsApp
+[SnapShotter](https://github.com/gzeuner/SnapShotter)
