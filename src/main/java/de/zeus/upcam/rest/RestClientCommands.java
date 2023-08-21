@@ -51,7 +51,6 @@ public class RestClientCommands {
      */
     private void setInitialHeaders() {
         headers.put("Authorization", conf.createBasicAuthHeader(conf.getUpcamUser(), conf.getUpcamPass()));
-        headers.put("Connection", "keep-alive");
     }
 
     /**

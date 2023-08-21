@@ -3,10 +3,11 @@ package de.zeus.upcam.rest;
 import de.zeus.upcam.rest.model.Response;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,7 +37,14 @@ public class RestClientService {
      */
     private synchronized void createHttpClient() {
         if (client == null) {
-            client = HttpClientBuilder.create().build();
+            RequestConfig config = RequestConfig.custom()
+                    .setSocketTimeout(15000)  // Sets the timeout for data transfers to 15 seconds
+                    .setConnectionRequestTimeout(15000)  // Sets the timeout for the connection request to 15 seconds
+                    .build();
+
+            client = HttpClients.custom()
+                    .setDefaultRequestConfig(config)
+                    .build();
         }
     }
 

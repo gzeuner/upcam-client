@@ -1,0 +1,44 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual Machine crash logs
+hs_err_pid*
+
+# IntelliJ project files
+.idea/
+*.iml
+*.iws
+
+# Eclipse project files
+.classpath
+.project
+.settings/
+
+# Mac system files
+.DS_Store
+
+# Build directory (Maven or other)
+/target/
+
+# Other common ignore items
+*.bak
+*.swp
+*.swo
+temp/
