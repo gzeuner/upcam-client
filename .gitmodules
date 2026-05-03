@@ -1,0 +1,3 @@
+[submodule "SnapShotter"]
+	path = SnapShotter
+	url = git@github.com:gzeuner/SnapShotter.git
