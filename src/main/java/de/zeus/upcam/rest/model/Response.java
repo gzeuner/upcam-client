@@ -1,5 +1,6 @@
 package de.zeus.upcam.rest.model;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -18,8 +19,7 @@ public class Response {
 
     public static final Log LOG = LogFactory.getLog(Response.class);
 
-    private final HttpResponse httpResponse;
-
+    private final StatusLine statusLine;
     private Optional<String> responseBody;
 
     /**
@@ -28,8 +28,14 @@ public class Response {
      * @param httpResponse The HttpResponse to wrap.
      */
     public Response(HttpResponse httpResponse) {
-        this.httpResponse = httpResponse;
-        setResponseBody();
+        if (httpResponse == null) {
+            this.statusLine = defaultStatusLine();
+            this.responseBody = Optional.empty();
+            return;
+        }
+
+        this.statusLine = httpResponse.getStatusLine();
+        setResponseBody(httpResponse);
     }
 
 
@@ -46,12 +52,25 @@ public class Response {
     /**
      * Sets the response body by reading it from the HttpResponse entity.
      */
-    private void setResponseBody() {
+    private void setResponseBody(HttpResponse httpResponse) {
         try {
-            responseBody = Optional.of(EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8));
+            if (httpResponse.getEntity() == null) {
+                responseBody = Optional.empty();
+            } else {
+                responseBody = Optional.of(EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8));
+            }
         } catch (IOException e) {
             LOG.error("Error while reading response body", e);
             responseBody = Optional.empty();
+        } finally {
+            EntityUtils.consumeQuietly(httpResponse.getEntity());
+            if (httpResponse instanceof Closeable) {
+                try {
+                    ((Closeable) httpResponse).close();
+                } catch (IOException e) {
+                    LOG.warn("Error while closing HTTP response", e);
+                }
+            }
         }
     }
 
@@ -61,7 +80,11 @@ public class Response {
      * @return The StatusLine of the response.
      */
     public StatusLine getStatusLine() {
-        return getHttpResponse().map(HttpResponse::getStatusLine).orElseGet(() -> new StatusLine() {
+        return statusLine != null ? statusLine : defaultStatusLine();
+    }
+
+    private StatusLine defaultStatusLine() {
+        return new StatusLine() {
             @Override
             public ProtocolVersion getProtocolVersion() {
                 return new ProtocolVersion("Not provided", 0, 0);
@@ -76,15 +99,6 @@ public class Response {
             public String getReasonPhrase() {
                 return "No status available";
             }
-        });
-    }
-
-    /**
-     * Gets the underlying HttpResponse.
-     *
-     * @return The HttpResponse wrapped by this Response.
-     */
-    public Optional<HttpResponse> getHttpResponse() {
-        return Optional.ofNullable(httpResponse);
+        };
     }
 }

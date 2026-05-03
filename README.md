@@ -1,109 +1,161 @@
-### Deutsch
-
 # UpCam Client
 
-UpCam Client ist ein Tool, das Bilder von einer IP-Kamera herunterlädt und bereitstellt. Es kann mit der upCam Tornado HD PRO und anderen kompatiblen Modellen verwendet werden.
-Ergänzend: [SnapShotter](https://github.com/gzeuner/SnapShotter) um Bilder per WhatsApp zu empfangen.
+UpCam Client downloads snapshots from an IP camera and stores them locally for further processing.
+Supported camera sources:
 
-## Voraussetzungen
+- `UPCAM`
+- `REOLINK`
 
-- Java 11 oder höher
+The repository also contains `SnapShotter` for WhatsApp-based forwarding.
+
+## Quick Start
+
+### Requirements
+
+- Java 21+
 - Maven
+- Node.js (only for `SnapShotter`)
 
-## Build
+### One-command setup
 
-Sie können das Projekt mit Maven bauen. Navigieren Sie im Terminal oder der Befehlszeile zu dem Verzeichnis, in dem sich die `pom.xml` befindet, und führen Sie den folgenden Befehl aus:
+Linux/macOS:
 
 ```bash
-mvn clean package
+./setup.sh
 ```
 
-Das Build-System erstellt die notwendigen Verzeichnisse, kopiert die erforderlichen Dateien und kompiliert das JAR.
+Windows:
 
-## Installation
+```cmd
+setup.bat
+```
 
-Nachdem das Projekt erfolgreich gebaut wurde, finden Sie die notwendigen Dateien im `upcam`-Ordner in Ihrem Home-Verzeichnis.
+The setup scripts:
 
-## Konfiguration
+1. build the project
+2. create `%USERPROFILE%\upcam` (or `${HOME}/upcam`)
+3. copy runtime files
+4. create `application.local.properties` from template (if missing)
 
-Passen Sie die `upcamclient.properties`-Datei im `upcam`-Ordner an Ihre Bedürfnisse an. Hier können Sie die Kamera-URL, Intervalle und andere spezifische Einstellungen konfigurieren.
+### Run
 
-## Ausführung
-
-Unter Linux können Sie das mitgelieferte Skript verwenden:
+Linux:
 
 ```bash
 ~/upcam/upcamclient.sh
 ```
 
-Unter Windows verwenden Sie:
+Windows:
 
 ```cmd
-%userprofile%\upcam\upcamclient.cmd
+%USERPROFILE%\upcam\upcamclient.cmd
 ```
 
-## Lizenz
-
-[MIT](LICENSE)
-
-# Besuchen Sie
-
-[tiny-tool.de](https://tiny-tool.de/).
-
-# Bilder per WhatsApp empfangen
-[SnapShotter](https://github.com/gzeuner/SnapShotter)
-
-### Englisch
-
-# UpCam Client
-
-UpCam Client is a tool that downloads and provides images from an IP camera. It can be used with the upCam Tornado HD PRO and other compatible models.
-Supplementary: [SnapShotter](https://github.com/gzeuner/SnapShotter) to receive pictures via WhatsApp.
-
-## Requirements
-
-- Java 11 or higher
-- Maven
-
-## Build
-
-You can build the project with Maven. Navigate to the directory containing the `pom.xml` in your terminal or command line, and execute the following command:
+Single ingest cycle:
 
 ```bash
-mvn clean package
+java -jar upcam-client-1.0-jar-with-dependencies.jar --once
 ```
 
-The build system will create the necessary directories, copy the required files, and compile the JAR.
+## Configuration Files
 
-## Installation
+- `application.properties`: tracked default config (no real secrets, placeholders only)
+- `upcamclient.properties`: tracked legacy-compatible config (no real secrets)
+- `application.local.properties`: local runtime overrides with real credentials/hosts, not tracked
+- `application.local.properties.example`: tracked template to create local config
 
-Once the project has been successfully built, you will find the necessary files in the `upcam` folder in your home directory.
+Practical rule:
 
-## Configuration
+1. keep committed defaults in `application.properties` / `upcamclient.properties` generic and safe
+2. put real usernames/passwords/host addresses only into `application.local.properties`
 
-Modify the `upcamclient.properties` file in the `upcam` folder to suit your needs. Here, you can configure the camera URL, intervals, and other specific settings.
+Resolution order for auto-start:
 
-## Execution
+1. `application.local.properties`
+2. `application.properties`
+3. `upcamclient.local.properties`
+4. `upcamclient.properties`
 
-On Linux, you can use the provided script:
+## Minimal Config Examples
+
+Put these values into `application.local.properties` on the target host (not into git-tracked files).
+
+### UPCAM
+
+```properties
+camera.type=UPCAM
+base.url=http://upcam.local
+image.daily.root.resource=/sd/${day}
+image.html.pattern=a[href*=images]
+upcam.user.name=admin
+upcam.user.pwd=change_me
+```
+
+### REOLINK
+
+```properties
+camera.type=REOLINK
+reolink.host=reolink.local
+reolink.httpPort=80
+reolink.username=admin
+reolink.password=change_me
+reolink.snapshotPath=/cgi-bin/api.cgi?cmd=Snap&channel=0&rs={timestamp}
+```
+
+Template variables supported in `reolink.snapshotPath` / `reolink.snapshotUrl`:
+
+- `{host}`
+- `{port}`
+- `{username}`
+- `{password}`
+- `{usernameEncoded}`
+- `{passwordEncoded}`
+- `{timestamp}`
+
+## Deployment Bundle
+
+Use:
+
+```powershell
+./package-prod.ps1
+```
+
+It creates a deploy zip under `deploy/` with Java + Node runtime files and launchers.
+No runtime image content (`images/*`) and no analysis/test sample scripts (for example `analyzeSamples.js`) are bundled.
+
+## Security / Commit Hygiene
+
+Never commit:
+
+- `application.local.properties`
+- runtime folders (`images/`, `logs/`, `.state/`, `.lock/`, `dataset/`, `sent/`)
+- Node auth/session folders (for example `SnapShotter/.wwebjs_auth/`)
+
+These paths are ignored via `.gitignore`.
+
+### Pre-Commit Check (Staged Files Only)
+
+Use this before commit:
 
 ```bash
-~/upcam/upcamclient.sh
+git diff --cached --name-only
+git diff --cached | rg -n --pcre2 "(?i)(password|secret|token|api[_-]?key|authorization|bearer|BEGIN [A-Z ]*PRIVATE KEY|\b(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)\b)"
 ```
 
-On Windows, use:
+## SnapShotter
 
-```cmd
-%userprofile%\upcam\upcamclient.cmd
+Node runtime is in:
+
+- `SnapShotter/src/SnapShotter.js`
+- `SnapShotter/src/config.js`
+
+Run tests:
+
+```bash
+cd SnapShotter
+npm test
 ```
 
 ## License
 
-[MIT](LICENSE)
-
-# Visit  
-
-[tiny-tool.de](https://tiny-tool.de/).
-
-# Receive images via WhatsApp
-[SnapShotter](https://github.com/gzeuner/SnapShotter)
+MIT

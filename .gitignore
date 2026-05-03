@@ -1,16 +1,8 @@
-# Compiled class files
+# -----------------------------------------------------------------------------
+# Build artifacts
+# -----------------------------------------------------------------------------
+/target/
 *.class
-
-# Log files
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
 *.jar
 *.war
 *.ear
@@ -18,27 +10,64 @@
 *.tar.gz
 *.rar
 
-# Virtual Machine crash logs
+# -----------------------------------------------------------------------------
+# Logs and temp files
+# -----------------------------------------------------------------------------
+*.log
 hs_err_pid*
-
-# IntelliJ project files
-.idea/
-*.iml
-*.iws
-
-# Eclipse project files
-.classpath
-.project
-.settings/
-
-# Mac system files
-.DS_Store
-
-# Build directory (Maven or other)
-/target/
-
-# Other common ignore items
 *.bak
 *.swp
 *.swo
 temp/
+
+# -----------------------------------------------------------------------------
+# IDE/editor files
+# -----------------------------------------------------------------------------
+.idea/
+.vscode/
+*.iml
+*.iws
+.classpath
+.project
+.settings/
+.DS_Store
+
+# -----------------------------------------------------------------------------
+# Runtime/state folders (do not commit local runtime data)
+# -----------------------------------------------------------------------------
+/.lock/
+/.state/
+/logs/
+/images/
+/sent/
+/dataset/
+/live_burst/
+/live_snapshot_test.jpg
+/marked_area_v2.jpeg
+/deploy/
+
+# -----------------------------------------------------------------------------
+# Node/runtime local folders
+# -----------------------------------------------------------------------------
+/node_modules/
+/SnapShotter/node_modules/
+/SnapShotter/.git/
+/SnapShotter/.state/
+/SnapShotter/.wwebjs_auth/
+/SnapShotter/images/
+/SnapShotter/wwebjs_auth.7z
+
+# -----------------------------------------------------------------------------
+# Local/private configuration files (safe defaults stay tracked)
+# -----------------------------------------------------------------------------
+*.local.properties
+application.local.properties
+upcamclient.local.properties
+src/main/resources/application.local.properties
+src/main/resources/upcamclient.local.properties
+
+# -----------------------------------------------------------------------------
+# Optional env files
+# -----------------------------------------------------------------------------
+.env
+.env.*

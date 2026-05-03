@@ -1,26 +1,22 @@
-# Legacy config filename for compatibility.
-# Preferred file name is now: application.properties
-# Keep secrets in application.local.properties (ignored by git).
-#
-# Keep this file in sync with application.properties.
+# -----------------------------------------------------------------------------
+# Local/private runtime config template
+# Copy this file to: application.local.properties
+# This file is intentionally not tracked by git (.gitignore).
+# -----------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# Camera selection
-# -----------------------------------------------------------------------------
+# Select source
 camera.type=REOLINK
+
+# Poll interval
 upcam.reload.sec=2
 
-# -----------------------------------------------------------------------------
 # Storage
-# -----------------------------------------------------------------------------
 image.local.store.rcv=./images/received/
 image.local.store.snt=./images/sent/
 file.max.age.days=2
 lock.file=./.lock/upcamclient.lock
 
-# -----------------------------------------------------------------------------
-# Cleanup service
-# -----------------------------------------------------------------------------
+# Cleanup
 cleanup.enabled=true
 cleanup.interval.seconds=300
 cleanup.images.enabled=true
@@ -31,9 +27,7 @@ cleanup.logs.enabled=true
 cleanup.logs.dir=./logs/
 cleanup.logs.maxAgeDays=30
 
-# -----------------------------------------------------------------------------
 # Prefilter
-# -----------------------------------------------------------------------------
 prefilter.enabled=true
 prefilter.hashType=roi-motion
 prefilter.resizeWidth=384
@@ -49,23 +43,19 @@ prefilter.failMode=open
 prefilter.noise.maxFiles=80
 prefilter.observeOnly=true
 
-# -----------------------------------------------------------------------------
-# UPCAM source
-# -----------------------------------------------------------------------------
+# UPCAM credentials (used when camera.type=UPCAM)
 base.url=http://upcam.local
 image.daily.root.resource=/sd/${day}
 image.html.pattern=a[href*=images]
 upcam.listingUrl=
-upcam.user.name=your_upcam_user
-upcam.user.pwd=your_upcam_password
+upcam.user.name=
+upcam.user.pwd=
 
-# -----------------------------------------------------------------------------
-# REOLINK source
-# -----------------------------------------------------------------------------
+# REOLINK credentials (used when camera.type=REOLINK)
 reolink.host=reolink.local
 reolink.httpPort=80
-reolink.username=your_reolink_user
-reolink.password=your_reolink_password
+reolink.username=
+reolink.password=
 reolink.snapshotPath=/cgi-bin/api.cgi?cmd=Snap&channel=0&rs={timestamp}&user={usernameEncoded}&password={passwordEncoded}
 reolink.snapshotUrl=
 reolink.verifyTls=false
