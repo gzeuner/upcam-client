@@ -9,8 +9,8 @@
     <version>1.0</version>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -44,13 +44,14 @@
             <artifactId>jsoup</artifactId>
             <version>1.16.1</version>
         </dependency>
+
     </dependencies>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>3.11.0</version>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -98,8 +99,11 @@
                                 <copy file="upcamclient.cmd" todir="${user.home}/upcam"/>
                                 <copy file="upcamclient.sh" todir="${user.home}/upcam"/>
 
-                                <!-- upcamclient.properties kopieren -->
+                                <!-- application.properties und Legacy upcamclient.properties kopieren -->
+                                <copy file="src/main/resources/application.properties" todir="${user.home}/upcam"/>
+                                <copy file="src/main/resources/application.local.properties.example" todir="${user.home}/upcam"/>
                                 <copy file="src/main/resources/upcamclient.properties" todir="${user.home}/upcam"/>
+                                <copy file="src/main/resources/log4j2.xml" todir="${user.home}/upcam"/>
 
                                 <!-- upcamclient.sh ausführbar machen (nur auf Unix-ähnlichen Systemen) -->
                                 <chmod file="${user.home}/upcam/upcamclient.sh" perm="755"/>

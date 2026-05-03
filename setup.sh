@@ -1,27 +1,36 @@
 #!/bin/bash
+set -euo pipefail
 
-# Verzeichnisse erstellen
-mkdir -p ~/upcam/images/received
-mkdir -p ~/upcam/images/sent
-mkdir -p ~/upcam/logs
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
 
-# Maven Build
-mvn clean install
+DEST_DIR="${HOME}/upcam"
 
-# Warte 3 Sekunden
-sleep 10
+echo "[1/4] Building project (mvn clean package)..."
+mvn clean package
 
-# Überprüfen, ob die JAR-Datei vorhanden ist
-if [ ! -f ./target/upcam-client-1.0-jar-with-dependencies.jar ]; then
-  echo "JAR-Datei wurde nicht gefunden!"
-  exit 1
+echo "[2/4] Preparing runtime directories in ${DEST_DIR}..."
+mkdir -p "${DEST_DIR}/images/received" \
+         "${DEST_DIR}/images/sent" \
+         "${DEST_DIR}/images/noise" \
+         "${DEST_DIR}/logs" \
+         "${DEST_DIR}/.state" \
+         "${DEST_DIR}/.lock"
+
+echo "[3/4] Copying runtime files..."
+cp -f "./target/upcam-client-1.0-jar-with-dependencies.jar" "${DEST_DIR}/"
+cp -f "./src/main/resources/application.properties" "${DEST_DIR}/"
+cp -f "./src/main/resources/application.local.properties.example" "${DEST_DIR}/"
+cp -f "./src/main/resources/upcamclient.properties" "${DEST_DIR}/"
+cp -f "./src/main/resources/log4j2.xml" "${DEST_DIR}/"
+cp -f "./upcamclient.sh" "${DEST_DIR}/"
+cp -f "./upcamclient.cmd" "${DEST_DIR}/"
+chmod +x "${DEST_DIR}/upcamclient.sh"
+
+if [[ ! -f "${DEST_DIR}/application.local.properties" ]]; then
+  cp -f "${DEST_DIR}/application.local.properties.example" "${DEST_DIR}/application.local.properties"
 fi
 
-# Kopieren von upcamclient.sh
-cp path/to/upcamclient.sh ~/upcam/
-
-# Ausführbare Berechtigungen für upcamclient.sh setzen
-chmod +x ~/upcam/upcamclient.sh
-
-# Kopieren der erzeugten JAR-Datei
-cp ./target/upcam-client-1.0-jar-with-dependencies.jar ~/upcam/ || echo "Kopieren der JAR-Datei fehlgeschlagen"
+echo "[4/4] Done."
+echo "Runtime folder: ${DEST_DIR}"
+echo "Edit ${DEST_DIR}/application.local.properties and set camera credentials."

@@ -1,143 +1,193 @@
 package de.zeus.upcam.rest;
 
+import de.zeus.upcam.rest.camera.CameraImage;
 import de.zeus.upcam.rest.client.config.Config;
 import de.zeus.upcam.rest.fileio.FileIO;
-import de.zeus.upcam.rest.format.Format;
 import de.zeus.upcam.rest.model.ImageFileTracker;
-import de.zeus.upcam.rest.model.Response;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import de.zeus.upcam.rest.prefilter.PrefilterDecision;
+import de.zeus.upcam.rest.prefilter.PrefilterService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
 
 /**
- * This class handles REST API commands to interact with the camera and download images.
+ * Handles image persistence and prefilter decisions after the camera source has fetched image bytes.
  */
 public class RestClientCommands {
 
-    private final RestClientService clientService;
     private final Config conf = Config.getInstance();
-    private final HashMap<String, String> headers = new HashMap<>();
     private static final Logger LOG = LogManager.getLogger(RestClientCommands.class);
     private static final FileIO fileIO = new FileIO();
+    private final PrefilterService prefilterService = new PrefilterService();
 
-    /**
-     * Constructor to initialize RestClientCommands with initial headers.
-     */
-    public RestClientCommands() {
-        this.clientService = new RestClientService();
-        setInitialHeaders();
-    }
+    public void persistImages(List<CameraImage> images, ImageFileTracker imageFileTracker) {
+        for (CameraImage image : images) {
+            String finalName = image.getSuggestedFilename();
+            String tmpName = finalName + "_tmp";
+            String imageId = filenameWithoutExtension(finalName);
 
-    /**
-     * Perform a GET request.
-     *
-     * @param url The URL to send the GET request to.
-     * @return The Response object containing the result of the GET request.
-     */
-    public Response get(String url) {
-        LOG.debug("GET {}", url);
-        return clientService.get(url, headers);
-    }
+            if (imageFileTracker.getImagesSent().contains(imageId)
+                    || imageFileTracker.getImagesReceived().contains(imageId)) {
+                continue;
+            }
 
-    /**
-     * Set initial headers required for the REST API calls.
-     */
-    private void setInitialHeaders() {
-        headers.put("Authorization", conf.createBasicAuthHeader(conf.getUpcamUser(), conf.getUpcamPass()));
-    }
-
-    /**
-     * Get a list of image URLs from the specified URL.
-     *
-     * @param url The URL to fetch image URLs from.
-     * @return List of image URLs.
-     */
-    public List<String> getImageURLs(String url) {
-        List<String> imgUrls = new ArrayList<>();
-        getImageFolders(url).forEach(folder -> {
-            String folderUrl = url + "/" + folder;
-            getImageNames(folderUrl).stream()
-                    .filter(imageName -> imageName.toLowerCase().contains("jpg"))
-                    .map(imageName -> folderUrl + imageName)
-                    .forEach(imgUrls::add);
-        });
-        return imgUrls;
-    }
-
-    /**
-     * Get a list of image folders from the specified URL.
-     *
-     * @param url The URL to fetch image folders from.
-     * @return List of image folders.
-     */
-    private List<String> getImageFolders(String url) {
-        LOG.info("getImageFolders("+url+")");
-        Response response = get(url);
-        getResponseStatus(response);
-        return response.getResponseBody()
-                .map(body -> Format.parseHtml(body, conf.getImageHtmlPattern()))
-                .orElse(new ArrayList<>());
-    }
-
-    /**
-     * Get a list of image names from the specified folder URL.
-     *
-     * @param folderUrl The URL of the folder to fetch image names from.
-     * @return List of image names.
-     */
-    private List<String> getImageNames(String folderUrl) {
-        LOG.info("getImageNames("+folderUrl+")");
-        Response response = get(folderUrl);
-        getResponseStatus(response);
-        return response.getResponseBody()
-                .map(body -> Format.parseHtml(body, conf.getImageHtmlPattern()))
-                .orElse(new ArrayList<>());
-    }
-
-    /**
-     * Download images from the given list of URLs and add them to the ImageFileTracker.
-     *
-     * @param imgUrls         List of image URLs to download.
-     * @param imageFileTracker The ImageFileTracker to keep track of downloaded images.
-     */
-    public void downloadImages(List<String> imgUrls, ImageFileTracker imageFileTracker) {
-        for (String imgUrl : imgUrls) {
-            String imgName = imgUrl.substring((imgUrl.lastIndexOf("/")) + 1) + "_tmp";
-            String imgNameWithoutExt = imgName.substring(0, imgName.lastIndexOf("."));
-
-            // Check if image name without extension is not in the sent or received images list
-            if (!imageFileTracker.getImagesSent().contains(imgNameWithoutExt)
-                    && !imageFileTracker.getImagesReceived().contains(imgNameWithoutExt)) {
-                HttpGet httpGet = new HttpGet(imgUrl);
-                HttpResponse response = clientService.executeImageRequest(httpGet);
-                if (response != null) {
-                    try (InputStream inputStream = response.getEntity().getContent()) {
-                        fileIO.copy(conf.getImgRcvFolder() + imgName, inputStream);
-                        imageFileTracker.addImageReceived(imgName);
-                        LOG.info("Received from Upcam: {}", imgName);
-                        // Call the method to rename the current downloaded image
-                        fileIO.renameDownloadedImage(imgName);
-                    } catch (IOException e) {
-                        LOG.error("Error while downloading or renaming image", e);
-                    }
-                }
+            Path tempPath = Paths.get(conf.getImgRcvFolder(), tmpName);
+            try {
+                fileIO.copy(tempPath.toString(), image.asInputStream());
+                applyPrefilterDecision(tempPath, finalName, imageId, image, imageFileTracker);
+            } catch (IOException e) {
+                LOG.error("Error while persisting image {}", finalName, e);
             }
         }
     }
 
-    /**
-     * Log the status line of the Response.
-     *
-     * @param response The Response to log the status line.
-     */
-    public void getResponseStatus(Response response) {
-        LOG.info(response.getStatusLine());
+    private void applyPrefilterDecision(Path tempPath,
+                                        String finalName,
+                                        String imageId,
+                                        CameraImage image,
+                                        ImageFileTracker imageFileTracker) throws IOException {
+        PrefilterDecision decision = prefilterService.evaluate(tempPath, image);
+        long size = Files.size(tempPath);
+        String targetPath = conf.getImgRcvFolder();
+
+        if (decision.getAction() == PrefilterDecision.Action.ACCEPT) {
+            Path finalPath = Paths.get(conf.getImgRcvFolder(), finalName);
+            fileIO.move(tempPath, finalPath);
+            writeMetadataFile(finalPath, image, decision);
+            imageFileTracker.addImageReceived(imageId);
+            targetPath = finalPath.toString();
+        } else if (decision.getAction() == PrefilterDecision.Action.NOISE) {
+            String mode = conf.getPrefilterMode();
+            if ("drop".equalsIgnoreCase(mode)) {
+                Files.deleteIfExists(tempPath);
+                imageFileTracker.addImageReceived(imageId);
+                targetPath = "DROP";
+            } else {
+                Path noisePath = Paths.get(conf.getPrefilterNoiseDir(), finalName);
+                fileIO.move(tempPath, noisePath);
+                writeMetadataFile(noisePath, image, decision);
+                imageFileTracker.addImageReceived(imageId);
+                targetPath = noisePath.toString();
+            }
+        }
+
+        LOG.info("Prefilter decision file={} size={} hash={} dist={} motionScore={} edgeRatio={} fgRatio={} fgArea={} largest={} cameraSignal={} nativeActive={} decision={} target={} reason={}",
+                finalName,
+                size,
+                decision.getHashHex(),
+                decision.getHammingDistance(),
+                String.format(Locale.ROOT, "%.5f", decision.getMotionScore()),
+                String.format(Locale.ROOT, "%.5f", decision.getEdgeDiffRatio()),
+                String.format(Locale.ROOT, "%.5f", decision.getForegroundRatio()),
+                decision.getForegroundArea(),
+                decision.getLargestComponentArea(),
+                decision.getCameraSignalSummary(),
+                decision.isCameraSignalActive(),
+                decision.getAction(),
+                targetPath,
+                decision.getReason());
+    }
+
+    private String filenameWithoutExtension(String filename) {
+        int dot = filename.lastIndexOf('.');
+        if (dot <= 0) {
+            return filename;
+        }
+        return filename.substring(0, dot);
+    }
+
+    private void writeMetadataFile(Path imagePath, CameraImage image, PrefilterDecision decision) {
+        if (imagePath == null || image == null || decision == null) {
+            return;
+        }
+
+        String imageName = imagePath.getFileName().toString();
+        String metadataName = filenameWithoutExtension(imageName) + ".json";
+        Path metadataPath = imagePath.resolveSibling(metadataName);
+        String timestamp = image.getTimestamp() != null ? image.getTimestamp().toString() : "";
+        String contentType = image.getContentType() != null ? image.getContentType() : "";
+        String summary = decision.getCameraSignalSummary() != null ? decision.getCameraSignalSummary() : "";
+        long sizeBytes = safeSize(imagePath);
+        String sha256 = sha256Hex(image.getData());
+
+        String json = "{\n" +
+                "  \"source\": \"java\",\n" +
+                "  \"capturedAt\": \"" + escapeJson(timestamp) + "\",\n" +
+                "  \"contentType\": \"" + escapeJson(contentType) + "\",\n" +
+                "  \"frame\": {\n" +
+                "    \"sizeBytes\": " + sizeBytes + ",\n" +
+                "    \"sha256\": \"" + escapeJson(sha256) + "\"\n" +
+                "  },\n" +
+                "  \"cameraSignal\": {\n" +
+                "    \"motionDetected\": " + image.getCameraSignal().isMotionDetected() + ",\n" +
+                "    \"personDetected\": " + image.getCameraSignal().isPersonDetected() + ",\n" +
+                "    \"vehicleDetected\": " + image.getCameraSignal().isVehicleDetected() + ",\n" +
+                "    \"animalDetected\": " + image.getCameraSignal().isAnimalDetected() + ",\n" +
+                "    \"active\": " + image.getCameraSignal().isAnyActive() + ",\n" +
+                "    \"summary\": \"" + escapeJson(summary) + "\"\n" +
+                "  },\n" +
+                "  \"prefilter\": {\n" +
+                "    \"action\": \"" + decision.getAction() + "\",\n" +
+                "    \"reason\": \"" + escapeJson(decision.getReason()) + "\",\n" +
+                "    \"motionScore\": " + formatDouble(decision.getMotionScore()) + ",\n" +
+                "    \"edgeDiffRatio\": " + formatDouble(decision.getEdgeDiffRatio()) + ",\n" +
+                "    \"foregroundRatio\": " + formatDouble(decision.getForegroundRatio()) + ",\n" +
+                "    \"foregroundArea\": " + decision.getForegroundArea() + ",\n" +
+                "    \"largestComponentArea\": " + decision.getLargestComponentArea() + "\n" +
+                "  }\n" +
+                "}\n";
+
+        try {
+            Files.writeString(metadataPath, json, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            LOG.warn("Unable to write metadata sidecar for {}", imageName, e);
+        }
+    }
+
+    private long safeSize(Path imagePath) {
+        try {
+            return Files.size(imagePath);
+        } catch (IOException e) {
+            return -1L;
+        }
+    }
+
+    private String sha256Hex(byte[] data) {
+        if (data == null || data.length == 0) {
+            return "";
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(data);
+            StringBuilder builder = new StringBuilder(hash.length * 2);
+            for (byte value : hash) {
+                builder.append(String.format(Locale.ROOT, "%02x", value));
+            }
+            return builder.toString();
+        } catch (NoSuchAlgorithmException e) {
+            return "";
+        }
+    }
+
+    private String formatDouble(double value) {
+        return String.format(Locale.ROOT, "%.6f", value);
+    }
+
+    private String escapeJson(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"");
     }
 }

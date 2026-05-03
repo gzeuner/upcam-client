@@ -16,60 +16,131 @@
 package de.zeus.upcam.rest;
 
 import de.zeus.upcam.rest.client.config.Config;
+import de.zeus.upcam.rest.util.ProcessLock;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Represents the main entry point for the UpCam RestClient application.
  */
 public class UpCamClientApp {
+    private static final String DEFAULT_LOCAL_PROPERTIES_FILE = "application.local.properties";
+    private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
+    private static final String LEGACY_LOCAL_PROPERTIES_FILE = "upcamclient.local.properties";
+    private static final String LEGACY_PROPERTIES_FILE = "upcamclient.properties";
+    private static final String DEFAULT_LOG4J_FILE = "log4j2.xml";
 
-    /**
-     * The main method that starts the UpCamClientApp .
-     *
-     * @param args The command-line arguments. The first argument should be the path to the upcamclient.properties
-     *             file, and the second argument should be the path to the log4j2.xml configuration file.
-     */
     public static void main(String[] args) {
-        // Create an instance of RestClient
         UpCamClientApp upCamClientApp = new UpCamClientApp();
-        // Initialize the configuration with the provided properties and log4j2.xml files
-        upCamClientApp.initConfig(args);
+        RunOptions runOptions = upCamClientApp.initConfig(args);
 
-        // Check if the correct number of arguments is provided
-        if (args.length != 2) {
-            // If not, print usage information and exit the program
-            upCamClientApp.exit();
-        }
-
-        // If the correct number of arguments is provided, start the image receive process
-        UpCamClient upCamClient = new UpCamClient();
-        upCamClient.startImageReceiveProcess();
-    }
-
-    /**
-     * Initializes the configuration with the provided properties and log4j2.xml files.
-     *
-     * @param args The command-line arguments containing the paths to the configuration files.
-     */
-    public void initConfig(String[] args) {
-        if (args.length != 2) {
-            // If the correct number of arguments is not provided, print usage information and exit the program
-            System.out.println("Usage: [upcamclient.properties] [log4j2.xml]");
+        Config config = Config.getInstance();
+        if (!ProcessLock.acquire(config.getLockFile())) {
+            System.out.println("UpCam-Client already running. Exiting.");
             System.exit(0);
         }
 
-        // Set config files and initialize configuration
-        Config config = Config.getInstance();
-        config.setPropertiesFile(args[0]);
-        config.setLog4jConfigFile(args[1]);
-        config.init();
+        UpCamClient upCamClient = new UpCamClient();
+
+        if (runOptions.runOnce) {
+            upCamClient.runSingleCycle();
+            System.exit(0);
+        }
+
+        upCamClient.startImageReceiveProcess();
     }
 
-    /**
-     * Prints usage information and exits the program.
-     */
+    public RunOptions initConfig(String[] args) {
+        RunOptions runOptions = parseArgs(args);
+        if (runOptions == null) {
+            exit();
+        }
+
+        if (!Files.exists(Paths.get(runOptions.propertiesFile))) {
+            System.out.println("Error: Properties file not found: " + runOptions.propertiesFile);
+            exit();
+        }
+        if (!Files.exists(Paths.get(runOptions.log4jConfigFile))) {
+            System.out.println("Error: Log4j config file not found: " + runOptions.log4jConfigFile);
+            exit();
+        }
+
+        Config config = Config.getInstance();
+        config.setPropertiesFile(runOptions.propertiesFile);
+        config.setLog4jConfigFile(runOptions.log4jConfigFile);
+        config.init();
+        return runOptions;
+    }
+
+    private RunOptions parseArgs(String[] args) {
+        if (args == null || args.length == 0) {
+            return new RunOptions(resolveDefaultPropertiesFile(), DEFAULT_LOG4J_FILE, false);
+        }
+
+        if (args.length == 1) {
+            if ("--once".equalsIgnoreCase(args[0])) {
+                return new RunOptions(resolveDefaultPropertiesFile(), DEFAULT_LOG4J_FILE, true);
+            }
+            return new RunOptions(args[0], DEFAULT_LOG4J_FILE, false);
+        }
+
+        if (args.length == 2) {
+            if ("--once".equalsIgnoreCase(args[1])) {
+                return new RunOptions(args[0], DEFAULT_LOG4J_FILE, true);
+            }
+            return new RunOptions(args[0], args[1], false);
+        }
+
+        if (args.length == 3 && "--once".equalsIgnoreCase(args[2])) {
+            return new RunOptions(args[0], args[1], true);
+        }
+
+        return null;
+    }
+
+    private String resolveDefaultPropertiesFile() {
+        Path localApplicationProperties = Paths.get(DEFAULT_LOCAL_PROPERTIES_FILE);
+        if (Files.exists(localApplicationProperties)) {
+            return DEFAULT_LOCAL_PROPERTIES_FILE;
+        }
+
+        Path applicationProperties = Paths.get(DEFAULT_PROPERTIES_FILE);
+        if (Files.exists(applicationProperties)) {
+            return DEFAULT_PROPERTIES_FILE;
+        }
+
+        Path legacyLocalProperties = Paths.get(LEGACY_LOCAL_PROPERTIES_FILE);
+        if (Files.exists(legacyLocalProperties)) {
+            return LEGACY_LOCAL_PROPERTIES_FILE;
+        }
+
+        Path legacyProperties = Paths.get(LEGACY_PROPERTIES_FILE);
+        if (Files.exists(legacyProperties)) {
+            return LEGACY_PROPERTIES_FILE;
+        }
+
+        return DEFAULT_PROPERTIES_FILE;
+    }
+
     public void exit() {
-        System.out.println("Usage: [upcamclient.properties] [log4j2.xml]");
+        System.out.println("Usage:");
+        System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar");
+        System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar [application.local.properties|application.properties|upcamclient.local.properties|upcamclient.properties]");
+        System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar [properties] [log4j2.xml] [--once]");
         System.exit(0);
     }
 
+    public static final class RunOptions {
+        private final String propertiesFile;
+        private final String log4jConfigFile;
+        private final boolean runOnce;
+
+        private RunOptions(String propertiesFile, String log4jConfigFile, boolean runOnce) {
+            this.propertiesFile = propertiesFile;
+            this.log4jConfigFile = log4jConfigFile;
+            this.runOnce = runOnce;
+        }
+    }
 }

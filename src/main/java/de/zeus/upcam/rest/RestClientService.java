@@ -2,10 +2,11 @@ package de.zeus.upcam.rest;
 
 import de.zeus.upcam.rest.model.Response;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.logging.log4j.LogManager;
@@ -42,8 +43,13 @@ public class RestClientService {
                     .setConnectionRequestTimeout(15000)  // Sets the timeout for the connection request to 15 seconds
                     .build();
 
+            PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+            connManager.setMaxTotal(50);
+            connManager.setDefaultMaxPerRoute(20);
+
             client = HttpClients.custom()
                     .setDefaultRequestConfig(config)
+                    .setConnectionManager(connManager)
                     .build();
         }
     }
@@ -69,7 +75,7 @@ public class RestClientService {
      */
     public Response execute(HttpUriRequest httpUriRequest) {
         try {
-            HttpResponse httpResponse = client.execute(httpUriRequest);
+            CloseableHttpResponse httpResponse = client.execute(httpUriRequest);
             return new Response(httpResponse);
         } catch (IOException e) {
             LOG.error("Error while executing HTTP request", e);
@@ -85,7 +91,7 @@ public class RestClientService {
      * @param httpUriRequest The HttpUriRequest to execute.
      * @return The HttpResponse from the server.
      */
-    public HttpResponse executeImageRequest(HttpUriRequest httpUriRequest) {
+    public CloseableHttpResponse executeImageRequest(HttpUriRequest httpUriRequest) {
         try {
             LOG.debug("GET " + httpUriRequest.getURI().toString());
             return client.execute(httpUriRequest);
