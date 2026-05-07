@@ -185,6 +185,24 @@ mvn clean package
 
 Das Build erzeugt die ausführbare Java-Anwendung und bereitet die benötigten Laufzeitdateien vor.
 
+### Build mit lokaler Konfiguration (echte Werte)
+
+1. Lokale Konfigurationsdatei befüllen:
+   `src/main/resources/application.properties`
+2. Optional für Legacy-Startpfad:
+   `src/main/resources/upcamclient.properties`
+3. Danach normal bauen:
+
+```bash
+mvn clean package
+```
+
+Optional: Deploy-Bundle erzeugen
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\package-prod.ps1
+```
+
 ---
 
 ## Installation
@@ -241,11 +259,10 @@ Die Konfiguration erfolgt über Properties-Dateien.
 Typisches Modell:
 
 ```text
-application.properties                 tracked defaults
-application.local.properties           lokale echte Konfiguration, nicht committen
-application.local.properties.example   Vorlage
-upcamclient.properties                 Legacy-kompatible Defaults
-upcamclient.local.properties           lokale Legacy-Overrides
+application.example.properties         Vorlage (wird verteilt)
+upcamclient.example.properties         Legacy-Vorlage (wird verteilt)
+application.properties                 lokale echte Konfiguration, nicht committen
+upcamclient.properties                 lokale Legacy-Konfiguration, nicht committen
 ```
 
 ### Wichtig
@@ -255,7 +272,7 @@ Echte Zugangsdaten gehören niemals ins Repository.
 Verwende für Passwörter, Tokens, lokale IP-Adressen und echte Kameradaten eine lokale Datei, zum Beispiel:
 
 ```text
-application.local.properties
+application.properties
 ```
 
 Diese Datei sollte nicht versioniert werden.
@@ -328,15 +345,14 @@ Dieses Projekt liefert nur technische Bausteine. Es ersetzt keine rechtliche ode
 Nicht committen:
 
 ```text
-application.local.properties
-upcamclient.local.properties
+application.properties
+upcamclient.properties
 images/
 logs/
 .state/
 .lock/
 dataset/
 sent/
-*.local.*
 ```
 
 Optionaler Check vor dem Commit:
