@@ -24,7 +24,6 @@ mkdir "%DEST_DIR%\.lock" 2>nul
 echo [3/4] Copying runtime files...
 copy /Y ".\target\upcam-client-1.0-jar-with-dependencies.jar" "%DEST_DIR%\" >nul
 copy /Y ".\src\main\resources\application.example.properties" "%DEST_DIR%\" >nul
-copy /Y ".\src\main\resources\upcamclient.example.properties" "%DEST_DIR%\" >nul
 copy /Y ".\src\main\resources\log4j2.xml" "%DEST_DIR%\" >nul
 copy /Y ".\upcamclient.cmd" "%DEST_DIR%\" >nul
 copy /Y ".\upcamclient.sh" "%DEST_DIR%\" >nul
@@ -33,10 +32,6 @@ if not exist "%DEST_DIR%\application.properties" (
   copy /Y "%DEST_DIR%\application.example.properties" "%DEST_DIR%\application.properties" >nul
 )
 
-if not exist "%DEST_DIR%\upcamclient.properties" (
-  copy /Y "%DEST_DIR%\upcamclient.example.properties" "%DEST_DIR%\upcamclient.properties" >nul
-)
-
 echo [4/4] Done.
 echo Runtime folder: %DEST_DIR%
-echo Edit %DEST_DIR%\application.properties or %DEST_DIR%\upcamclient.properties and set camera credentials.
+echo Edit %DEST_DIR%\application.properties and set camera credentials.

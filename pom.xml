@@ -101,7 +101,6 @@
 
                                 <!-- Beispielkonfigurationen kopieren -->
                                 <copy file="src/main/resources/application.example.properties" todir="${user.home}/upcam"/>
-                                <copy file="src/main/resources/upcamclient.example.properties" todir="${user.home}/upcam"/>
                                 <copy file="src/main/resources/log4j2.xml" todir="${user.home}/upcam"/>
 
                                 <!-- upcamclient.sh ausführbar machen (nur auf Unix-ähnlichen Systemen) -->
