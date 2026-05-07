@@ -20,7 +20,6 @@ mkdir -p "${DEST_DIR}/images/received" \
 echo "[3/4] Copying runtime files..."
 cp -f "./target/upcam-client-1.0-jar-with-dependencies.jar" "${DEST_DIR}/"
 cp -f "./src/main/resources/application.example.properties" "${DEST_DIR}/"
-cp -f "./src/main/resources/upcamclient.example.properties" "${DEST_DIR}/"
 cp -f "./src/main/resources/log4j2.xml" "${DEST_DIR}/"
 cp -f "./upcamclient.sh" "${DEST_DIR}/"
 cp -f "./upcamclient.cmd" "${DEST_DIR}/"
@@ -30,10 +29,6 @@ if [[ ! -f "${DEST_DIR}/application.properties" ]]; then
   cp -f "${DEST_DIR}/application.example.properties" "${DEST_DIR}/application.properties"
 fi
 
-if [[ ! -f "${DEST_DIR}/upcamclient.properties" ]]; then
-  cp -f "${DEST_DIR}/upcamclient.example.properties" "${DEST_DIR}/upcamclient.properties"
-fi
-
 echo "[4/4] Done."
 echo "Runtime folder: ${DEST_DIR}"
-echo "Edit ${DEST_DIR}/application.properties or ${DEST_DIR}/upcamclient.properties and set camera credentials."
+echo "Edit ${DEST_DIR}/application.properties and set camera credentials."

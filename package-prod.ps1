@@ -18,7 +18,6 @@ $npmCommand = if ($isWindowsHost) { 'npm.cmd' } else { 'npm' }
 $javaFiles = @(
   @{ Source = Join-Path $repoRoot 'target\upcam-client-1.0-jar-with-dependencies.jar'; Target = 'upcam-client-1.0-jar-with-dependencies.jar' },
   @{ Source = Join-Path $repoRoot 'src\main\resources\application.example.properties'; Target = 'application.example.properties' },
-  @{ Source = Join-Path $repoRoot 'src\main\resources\upcamclient.example.properties'; Target = 'upcamclient.example.properties' },
   @{ Source = Join-Path $repoRoot 'src\main\resources\log4j2.xml'; Target = 'log4j2.xml' },
   @{ Source = Join-Path $repoRoot 'upcamclient.cmd'; Target = 'upcamclient.cmd' },
   @{ Source = Join-Path $repoRoot 'upcamclient.sh'; Target = 'upcamclient.sh' }
@@ -162,8 +161,8 @@ This bundle contains:
 Notes:
 - The Node dependency tree is platform-specific because of native modules such as sharp.
 - Build this bundle on the same OS/architecture as the production target if you include node_modules.
-- Copy application.example.properties to application.properties (or upcamclient.example.properties to upcamclient.properties) and set credentials on target host.
-- Start Java with upcamclient.cmd/sh (prefers application.properties, then upcamclient.properties).
+- Copy application.example.properties to application.properties and set credentials on target host.
+- Start Java with upcamclient.cmd/sh using application.properties.
 - Start Node with snapshotter.cmd/sh from the bundle root.
 "@
 

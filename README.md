@@ -189,9 +189,7 @@ Das Build erzeugt die ausführbare Java-Anwendung und bereitet die benötigten L
 
 1. Lokale Konfigurationsdatei befüllen:
    `src/main/resources/application.properties`
-2. Optional für Legacy-Startpfad:
-   `src/main/resources/upcamclient.properties`
-3. Danach normal bauen:
+2. Danach normal bauen:
 
 ```bash
 mvn clean package
@@ -260,9 +258,7 @@ Typisches Modell:
 
 ```text
 application.example.properties         Vorlage (wird verteilt)
-upcamclient.example.properties         Legacy-Vorlage (wird verteilt)
 application.properties                 lokale echte Konfiguration, nicht committen
-upcamclient.properties                 lokale Legacy-Konfiguration, nicht committen
 ```
 
 ### Wichtig
@@ -346,7 +342,6 @@ Nicht committen:
 
 ```text
 application.properties
-upcamclient.properties
 images/
 logs/
 .state/

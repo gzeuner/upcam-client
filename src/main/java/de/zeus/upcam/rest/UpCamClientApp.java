@@ -27,7 +27,6 @@ import java.nio.file.Paths;
  */
 public class UpCamClientApp {
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
-    private static final String LEGACY_PROPERTIES_FILE = "upcamclient.properties";
     private static final String DEFAULT_LOG4J_FILE = "log4j2.xml";
 
     public static void main(String[] args) {
@@ -104,18 +103,13 @@ public class UpCamClientApp {
             return DEFAULT_PROPERTIES_FILE;
         }
 
-        Path legacyProperties = Paths.get(LEGACY_PROPERTIES_FILE);
-        if (Files.exists(legacyProperties)) {
-            return LEGACY_PROPERTIES_FILE;
-        }
-
         return DEFAULT_PROPERTIES_FILE;
     }
 
     public void exit() {
         System.out.println("Usage:");
         System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar");
-        System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar [application.properties|upcamclient.properties]");
+        System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar [application.properties]");
         System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar [properties] [log4j2.xml] [--once]");
         System.exit(0);
     }
