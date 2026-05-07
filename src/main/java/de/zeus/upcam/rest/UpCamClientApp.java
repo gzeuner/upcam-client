@@ -26,9 +26,7 @@ import java.nio.file.Paths;
  * Represents the main entry point for the UpCam RestClient application.
  */
 public class UpCamClientApp {
-    private static final String DEFAULT_LOCAL_PROPERTIES_FILE = "application.local.properties";
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
-    private static final String LEGACY_LOCAL_PROPERTIES_FILE = "upcamclient.local.properties";
     private static final String LEGACY_PROPERTIES_FILE = "upcamclient.properties";
     private static final String DEFAULT_LOG4J_FILE = "log4j2.xml";
 
@@ -101,19 +99,9 @@ public class UpCamClientApp {
     }
 
     private String resolveDefaultPropertiesFile() {
-        Path localApplicationProperties = Paths.get(DEFAULT_LOCAL_PROPERTIES_FILE);
-        if (Files.exists(localApplicationProperties)) {
-            return DEFAULT_LOCAL_PROPERTIES_FILE;
-        }
-
         Path applicationProperties = Paths.get(DEFAULT_PROPERTIES_FILE);
         if (Files.exists(applicationProperties)) {
             return DEFAULT_PROPERTIES_FILE;
-        }
-
-        Path legacyLocalProperties = Paths.get(LEGACY_LOCAL_PROPERTIES_FILE);
-        if (Files.exists(legacyLocalProperties)) {
-            return LEGACY_LOCAL_PROPERTIES_FILE;
         }
 
         Path legacyProperties = Paths.get(LEGACY_PROPERTIES_FILE);
@@ -127,7 +115,7 @@ public class UpCamClientApp {
     public void exit() {
         System.out.println("Usage:");
         System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar");
-        System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar [application.local.properties|application.properties|upcamclient.local.properties|upcamclient.properties]");
+        System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar [application.properties|upcamclient.properties]");
         System.out.println("  java -jar upcam-client-1.0-jar-with-dependencies.jar [properties] [log4j2.xml] [--once]");
         System.exit(0);
     }

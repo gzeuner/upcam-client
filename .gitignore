@@ -58,13 +58,14 @@ temp/
 /SnapShotter/wwebjs_auth.7z
 
 # -----------------------------------------------------------------------------
-# Local/private configuration files (safe defaults stay tracked)
+# Local/private configuration files
 # -----------------------------------------------------------------------------
 *.local.properties
 application.local.properties
 upcamclient.local.properties
 src/main/resources/application.local.properties
 src/main/resources/upcamclient.local.properties
+src/main/resources/application.properties
 src/main/resources/upcamclient.properties
 
 # -----------------------------------------------------------------------------

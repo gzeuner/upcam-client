@@ -99,10 +99,9 @@
                                 <copy file="upcamclient.cmd" todir="${user.home}/upcam"/>
                                 <copy file="upcamclient.sh" todir="${user.home}/upcam"/>
 
-                                <!-- application.properties und Legacy upcamclient.properties kopieren -->
-                                <copy file="src/main/resources/application.properties" todir="${user.home}/upcam"/>
-                                <copy file="src/main/resources/application.local.properties.example" todir="${user.home}/upcam"/>
-                                <copy file="src/main/resources/upcamclient.properties" todir="${user.home}/upcam"/>
+                                <!-- Beispielkonfigurationen kopieren -->
+                                <copy file="src/main/resources/application.example.properties" todir="${user.home}/upcam"/>
+                                <copy file="src/main/resources/upcamclient.example.properties" todir="${user.home}/upcam"/>
                                 <copy file="src/main/resources/log4j2.xml" todir="${user.home}/upcam"/>
 
                                 <!-- upcamclient.sh ausführbar machen (nur auf Unix-ähnlichen Systemen) -->
