@@ -65,6 +65,7 @@ application.local.properties
 upcamclient.local.properties
 src/main/resources/application.local.properties
 src/main/resources/upcamclient.local.properties
+src/main/resources/upcamclient.properties
 
 # -----------------------------------------------------------------------------
 # Optional env files
